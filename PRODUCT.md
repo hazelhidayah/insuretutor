@@ -33,7 +33,7 @@ An evidence-first insurance tutor that turns every substantive answer into a pat
 
 - Conversational chat with retained context.
 - Retrieval-augmented answers with accurate source citations.
-- English and Chinese support; Simplified and Traditional Chinese are a bonus target.
+- English and Simplified Chinese are the supported user-facing languages.
 - Local retrieval must not depend on a hosted embeddings endpoint.
 - Model base URL, model name, and API key must be configurable.
 - Secrets must remain outside version control.

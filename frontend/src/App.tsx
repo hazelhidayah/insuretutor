@@ -1,44 +1,14 @@
 import { FormEvent, Fragment, useMemo, useRef, useState } from "react";
 
-type Language = "auto" | "en" | "zh-CN" | "zh-TW";
-
-type Citation = {
-  id: string;
-  source: string;
-  page: number;
-  section: string;
-  excerpt: string;
-};
-
-type ApiResponse = {
-  answer: string;
-  citations: Citation[];
-  language: string;
-  grounded: boolean;
-  notice?: string;
-};
-
-type ConversationMessage = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  citations?: Citation[];
-  grounded?: boolean;
-  notice?: string;
-};
+import type { ApiResponse, AnswerVariant, Citation, ConversationMessage, Language } from "./chat/types";
+import { asAnswerLanguage, languageLabels, selectableLanguages } from "./chat/languages";
+import { TranslationControls, useAnswerTranslation } from "./features/answer-translation";
 
 const starters = [
   "What interest rate is actually guaranteed?",
   "Can I stop paying premiums temporarily?",
-  "定期提款有甚麼條件？",
+  "定期提款有什么条件？",
 ];
-
-const languageLabels: Record<Language, string> = {
-  auto: "Match my language",
-  en: "English",
-  "zh-CN": "简体中文",
-  "zh-TW": "繁體中文",
-};
 
 function SourceMark({
   label,
@@ -87,10 +57,12 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const activeRequestRef = useRef<AbortController | null>(null);
 
+  const { translating, translate, reset, variants } = useAnswerTranslation();
   const recentCitations = useMemo(
-    () => messages.slice().reverse().find((message) => message.citations?.length)?.citations ?? [],
-    [messages],
+    () => messages.slice().reverse().map((message) => ({ ...message, ...variants[message.id]?.displayed })).find((message) => message.citations?.length)?.citations ?? [],
+    [messages, variants],
   );
 
   async function submitQuestion(value: string) {
@@ -103,46 +75,62 @@ function App() {
       content: trimmed,
     };
     const previousMessages = messages;
+    const requestHistory = previousMessages.map(({ role, content }) => ({ role, content }));
     setMessages([...previousMessages, userMessage]);
     setQuestion("");
     setLoading(true);
+    const controller = new AbortController();
+    activeRequestRef.current?.abort();
+    activeRequestRef.current = controller;
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: trimmed,
           language,
-          history: previousMessages.map(({ role, content }) => ({ role, content })),
+          history: requestHistory,
         }),
       });
       if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
       const payload = (await response.json()) as ApiResponse;
-      const assistantMessage: ConversationMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
+      const responseLanguage = asAnswerLanguage(payload.language);
+      const answerVariant: AnswerVariant = {
         content: payload.answer,
         citations: payload.citations,
         grounded: payload.grounded,
         notice: payload.notice,
       };
+      const assistantMessage: ConversationMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        ...answerVariant,
+        question: trimmed,
+        requestHistory,
+        answerLanguage: responseLanguage,
+      };
       setMessages((current) => [...current, assistantMessage]);
       if (payload.citations[0]) setActiveCitation(payload.citations[0]);
     } catch (error) {
+      if (controller.signal.aborted) return;
       setMessages((current) => [
         ...current,
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: "I couldn’t reach the InsureTutor service. Check that the application is running, then try again.",
+          content: "InsureTutor is temporarily unavailable. Please try again. If the issue continues, check that the application is running.",
           grounded: false,
           notice: error instanceof Error ? error.message : "Unexpected request error",
         },
       ]);
     } finally {
-      setLoading(false);
-      requestAnimationFrame(() => inputRef.current?.focus());
+      if (activeRequestRef.current === controller) {
+        activeRequestRef.current = null;
+        setLoading(false);
+        requestAnimationFrame(() => inputRef.current?.focus());
+      }
     }
   }
 
@@ -152,9 +140,13 @@ function App() {
   }
 
   function startOver() {
+    activeRequestRef.current?.abort();
+    reset();
+    activeRequestRef.current = null;
     setMessages([]);
     setActiveCitation(null);
     setQuestion("");
+    setLoading(false);
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
@@ -185,10 +177,10 @@ function App() {
           {messages.length === 0 ? (
             <div className="opening">
               <p className="opening-index">FLEXI-ULife Prime Saver · Reference edition</p>
-              <h1>Understand the policy.<br />Keep the fine print in view.</h1>
+              <h1>Understand the plan<br />and its conditions.</h1>
               <p className="opening-copy">
-                Ask in English, 简体中文, or 繁體中文. Every supported answer points back to the supplied brochure,
-                so you can inspect the evidence yourself.
+                Ask about benefits, charges, or conditions in English or 简体中文.
+                Open a cited brochure page to review the details for yourself.
               </p>
               <div className="starter-list" aria-label="Example questions">
                 {starters.map((starter) => (
@@ -204,26 +196,40 @@ function App() {
             </div>
           ) : (
             <div className="message-list" aria-live="polite">
-              {messages.map((message) => (
-                <article className={`message message-${message.role}`} key={message.id}>
+              {messages.map((message) => {
+                const variant = variants[message.id];
+                const displayed = { ...message, ...variant?.displayed };
+                const translatingThisMessage = translating?.messageId === message.id;
+                return (
+                <article className={`message message-${message.role}`} key={message.id} lang={variant?.language ?? message.answerLanguage}>
                   <div className="message-meta">
                     <span>{message.role === "user" ? "You" : "InsureTutor"}</span>
                     {message.role === "assistant" && (
-                      <span className={message.grounded ? "grounded" : "withheld"}>
-                        {message.grounded ? "Sources checked" : "Not grounded"}
+                      <span className={displayed.grounded ? "grounded" : "withheld"}>
+                        {displayed.grounded ? "Sources checked" : "Not grounded"}
                       </span>
                     )}
                   </div>
                   <div className="message-content">
                     {message.role === "assistant" ? (
-                      <AnswerText message={message} onSelect={setActiveCitation} />
+                      <AnswerText message={displayed} onSelect={setActiveCitation} />
                     ) : (
                       message.content
                     )}
                   </div>
-                  {message.notice && <p className="message-notice">{message.notice}</p>}
+                  {displayed.notice && <p className="message-notice">{displayed.notice}</p>}
+                  {message.role === "assistant" && message.question && (
+                    <TranslationControls
+                      language={variant?.language ?? message.answerLanguage}
+                      pending={translatingThisMessage ? translating.language : undefined}
+                      disabled={Boolean(translating) || loading}
+                      error={variant?.error}
+                      onSelect={(target) => void translate(message, target, setActiveCitation)}
+                    />
+                  )}
                 </article>
-              ))}
+                );
+              })}
               {loading && (
                 <div className="thinking" role="status">
                   <span /><span /><span /> Checking the brochure
@@ -254,8 +260,8 @@ function App() {
               <label className="language-picker">
                 <span>Reply in</span>
                 <select value={language} onChange={(event) => setLanguage(event.target.value as Language)}>
-                  {Object.entries(languageLabels).map(([value, label]) => (
-                    <option value={value} key={value}>{label}</option>
+                  {selectableLanguages.map((value) => (
+                    <option value={value} key={value}>{languageLabels[value]}</option>
                   ))}
                 </select>
               </label>
