@@ -26,6 +26,7 @@ async def lifespan(app: FastAPI):
         settings.model_base_url,
         settings.model_api_key,
         settings.model_name,
+        temperature=settings.model_temperature,
     )
     app.state.retrieval = retrieval
     app.state.provider = provider
