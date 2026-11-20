@@ -285,17 +285,19 @@ function App() {
           {displayedCitations.length ? (
             <div className="evidence-list">
               {displayedCitations.map((citation) => (
-                <button
-                  type="button"
+                <a
                   key={`${citation.id}-${citation.page}`}
                   className={`evidence-item ${activeCitation?.id === citation.id ? "active" : ""}`}
-                  onClick={() => setActiveCitation(citation)}
+                  href={`/api/brochure#page=${citation.page}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   <span className="page-tab">p. {citation.page}</span>
                   <strong>{citation.section}</strong>
                   <span>{citation.excerpt}</span>
                   <small>{citation.source}</small>
-                </button>
+                  <small className="brochure-link-label">Open brochure at page {citation.page} (new tab)</small>
+                </a>
               ))}
             </div>
           ) : (

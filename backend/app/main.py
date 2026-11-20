@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +13,8 @@ from .models import ChatRequest, ChatResponse, HealthResponse
 from .providers import OpenAICompatibleProvider
 from .retrieval import RetrievalStore
 from .settings import get_settings
+
+BROCHURE_PATH = Path(__file__).resolve().parents[2] / "data" / "FLEXI-ULife Prime Saver.pdf"
 
 
 @asynccontextmanager
@@ -67,6 +70,18 @@ async def chat(payload: ChatRequest, request: Request) -> ChatResponse:
 
 
 settings = get_settings()
+
+
+@app.get("/api/brochure")
+async def brochure() -> FileResponse:
+    return FileResponse(
+        BROCHURE_PATH,
+        media_type="application/pdf",
+        filename=BROCHURE_PATH.name,
+        content_disposition_type="inline",
+    )
+
+
 if settings.static_path.exists():
     assets_path = settings.static_path / "assets"
     if assets_path.exists():
