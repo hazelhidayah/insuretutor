@@ -381,6 +381,18 @@ Do not create entries for read-only inspection or inconsequential formatting. Re
 
 **AI assistance:** The primary Codex agent implemented and verified the changes.
 
+## Add an optional citation check to the demo
+
+**Why:** Demonstrate how to verify that an answer preserves material brochure conditions.
+
+**Where:** README demo walkthrough.
+
+**How:** Add a checklist for comparing the two rates, the eligibility period, and the cited passages.
+
+**Impact:** Provides a repeatable manual check for the follow-up interview.
+
+**Verification:** Reviewed the checklist against the existing walkthrough and ran `git diff --check`. No live demo was run for this documentation change.
+
 ## Enforce adapter boundaries and isolate answer translation
 
 **Why:** The Dune method calls for mechanically enforced dependencies and clear feature ownership.

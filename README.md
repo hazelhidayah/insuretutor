@@ -136,6 +136,16 @@ Run the offline evaluation suite with `PYTHONPATH=backend python -m app.evaluati
 3. Choose **简体** under the answer, then switch back to English. Check that the Simplified Chinese answer retains the qualification and has inspectable citations.
 4. Ask “Does that guarantee apply before 15 years?” to check conversational context. Then ask for the insurer's current credit rating or a personalised buying recommendation to see where the tutor should abstain.
 
+### Optional demo check: Verify a cited claim
+
+Ask “Is the 4% interest rate guaranteed?” Select its citation marker, then open the cited brochure page from the source desk. Compare the answer with the relevant passage:
+
+- Check that the answer describes 4% as the brochure’s assumed base crediting rate, not a guarantee.
+- If the answer mentions the separate 2.5% long-term guarantee, check that it specifies the policy must have been in force for at least 15 years and describes the account-value guarantee accurately.
+- Check that each claim points to a page that supports it. If the page supports the number but the answer leaves out a condition, flag the answer as incomplete.
+
+During the interview, show the sentence in the answer and the passage side by side. Explain which wording preserves the brochure’s condition.
+
 ## Example conversations
 
 ### Guaranteed versus assumed interest
@@ -164,7 +174,6 @@ Run the offline evaluation suite with `PYTHONPATH=backend python -m app.evaluati
 
 ## Known limitations
 
-- The source is a product brochure, not the complete policy contract.
 - The brochure's bilingual layout can produce imperfect extracted reading order.
 - Citation-label validation confirms that cited sources were retrieved, not that every clause of the answer is logically entailed.
 - Conversation state lives in the browser request history and is not persisted.
