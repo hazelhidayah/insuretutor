@@ -11,10 +11,53 @@ Before committing a material change, append an entry containing:
 - **How** - the implementation approach and important trade-offs.
 - **Impact** - the resulting user, engineering, deployment, or risk effect.
 - **Verification** - how the result was checked.
+- **AI assistance** - when materially relevant, the actual agent role, observable model/reasoning configuration, assigned scope, and coordinator review.
 
 Do not create entries for read-only inspection or inconsequential formatting. Record corrections and failed approaches when they explain an important design decision.
 
 ---
+
+## 2026-11-18 - Correct automatic Chinese script detection
+
+**Why:** End-to-end Chinese input checks showed that a clearly Simplified Chinese insurance question was incorrectly routed to Traditional Chinese because the heuristic treated the shared character `保` as Traditional-only.
+
+**Where:** `backend/app/chat.py`, `backend/app/retrieval/store.py`, `backend/tests/test_chat_language.py`, and `backend/tests/test_retrieval.py`.
+
+**How:** Replaced the one-sided marker check with matched Simplified/Traditional character sets, selected the script with stronger evidence, retained Simplified Chinese as the neutral fallback for ambiguous Han text, and passed the resolved language to the model prompt. Normalised a bounded set of script variants before the conservative evidence check and removed common question lead-ins so punctuation and emoji cannot dilute relevant terms. Added regression cases covering Simplified, Traditional, mixed English/Chinese, punctuation, emoji, English, and explicit language overrides.
+
+**Impact:** Automatic language selection no longer routes ordinary Simplified Chinese insurance questions to Traditional Chinese, while explicit user selection remains authoritative. Supported Simplified questions can match the brochure's Traditional Chinese evidence without weakening rejection of unrelated queries. Unicode input and output behaviour is unchanged.
+
+**Verification:** Ran the language regression tests, the complete backend suite, and live API checks against the configured local model; then entered a Traditional Chinese question through the browser interface.
+
+**AI assistance:** The primary implementation agent designed and applied the correction after an end-to-end test matrix exposed the defect; no subagent authored this change.
+
+## 2026-11-18 - Add grounded answer translation controls
+
+**Why:** Users should be able to read an existing answer in English, Simplified Chinese, or Traditional Chinese without retyping the original question.
+
+**Where:** `frontend/src/App.tsx`, `frontend/src/styles.css`, and `README.md`.
+
+**How:** Added an accessible per-answer language switcher. The first selection regenerates the answer from the same original question, conversation context, and brochure pipeline in the requested language; citation validation and guardrails therefore still apply. Successful language variants are cached in browser state so subsequent switches are immediate. Added loading, disabled, error, active-language, cancellation, and responsive states.
+
+**Impact:** A user can move between English, Simplified Chinese, and Traditional Chinese versions of an answer while retaining inspectable source citations. The control does not present an unverified client-side or literal machine translation as grounded evidence.
+
+**Verification:** The production Docker build completed, the interface-quality detector returned no findings, and a live browser flow generated an English cited answer, regenerated it in Simplified Chinese with citations, and switched back to the cached English version immediately. The complete backend suite remained green. The direct host build could not start because the local Homebrew Node binary is missing `libsimdjson.33.dylib`; Docker's pinned Node build verified the production frontend instead.
+
+**AI assistance:** The primary implementation agent designed, implemented, and visually reviewed the control; no subagent authored this change.
+
+## 2026-11-18 - Narrow the interface to English and Simplified Chinese
+
+**Why:** The product owner confirmed that Traditional Chinese is not needed in the user-facing chatbot.
+
+**Where:** `frontend/src/App.tsx`, `README.md`, and `PRODUCT.md`.
+
+**How:** Removed Traditional Chinese from the reply selector and per-answer translation controls, changed the Chinese starter question and interface copy to Simplified Chinese, and retained the backend-compatible language type to avoid an unnecessary API migration.
+
+**Impact:** Users now see a simpler bilingual experience with only English and Simplified Chinese choices. Existing backend compatibility is preserved but no Traditional Chinese option is advertised or selectable in the interface.
+
+**Verification:** Rebuilt the production Docker image, reran the interface-quality detector, and checked the refreshed browser controls and bilingual translation flow.
+
+**AI assistance:** The primary implementation agent applied and reviewed this scoped interface simplification; no subagent authored the change.
 
 ## 2026-11-17 - Analyse the assignment and reference material
 
@@ -267,3 +310,87 @@ Do not create entries for read-only inspection or inconsequential formatting. Re
 **Impact:** Reviewers can trace not only what was built, but why each decision was made, where it was implemented, how it works, and what it changed.
 
 **Verification:** Cross-checked every entry against the current repository, the three existing commits, and completed validation results.
+
+## 2026-11-18 - Add task-specific agent workflow and evaluation harness
+
+**Why:** The next milestone required stronger evaluation evidence and the user explicitly requested development subagents with reasoning effort matched to task complexity.
+
+**Where:** `backend/app/evaluation.py`, `backend/app/eval_data/cases.json`, `backend/tests/test_evaluation.py`, `backend/app/retrieval/store.py`, `docs/evaluation.md`, `docs/ai-development-workflow.md`, and `README.md`.
+
+**How:** Used separate read-only exploration and planning agents plus a bounded implementation agent. Added an offline evaluation runner with scripted provider responses, an opt-in live-provider path, multilingual and adversarial fixtures, citation and language checks, and regression cases for unrelated questions. Replaced reliance on relative retrieval score alone with conservative English-term and Chinese-bigram evidence coverage applied to lexical and hybrid results. Localised guardrail and provider-failure responses, inspected history for injection attempts, bounded submitted history, rejected malformed provider payloads, and cancelled in-flight browser requests when starting a new conversation.
+
+**Impact:** The project can now exercise the real chat orchestration without a paid provider, explicitly distinguishes mocked from live evidence, blocks the reproduced credit-rating, recipe, and weather false positives more conservatively, and handles several failure paths without leaking upstream details or contaminating a reset conversation. Valid paraphrases can now be rejected, so broader multilingual calibration remains necessary.
+
+**Verification:** The complete backend suite passed 15 tests and the offline evaluation passed 15/15 cases. A rebuilt hybrid Docker service rejected five unrelated English/Chinese questions while four supported English/Chinese questions reached the provider boundary. No genuine provider generation was run because `.env` is absent.
+
+**AI assistance:** Exploration used `gpt-6.1-sol` at medium reasoning; planning used `gpt-6-astra` at high reasoning; implementation used `gpt-6.1-terra` at high reasoning. The primary coordinator reviewed and amended the implementation. No agent committed or pushed changes.
+
+## 2026-11-18 - Configure and evaluate a local generation provider
+
+**Why:** Retrieval and mocked orchestration were verified, but genuine answer generation remained untested because no provider was configured.
+
+**Where:** Ignored local `.env`, `backend/app/chat.py`, `backend/app/providers/openai_compatible.py`, `docs/evaluation.md`, and `README.md`.
+
+**How:** Configured Docker to reach the existing host Ollama OpenAI-compatible endpoint at `host.docker.internal` using `qwen2.5:7b`. Set generation temperature to zero, repeated the allowed citation labels immediately before the source excerpts, and added one bounded repair attempt when the first answer contains missing or unknown labels. The second response is still validated and withheld if invalid.
+
+**Impact:** The application can now generate real local English and Chinese answers without a hosted API key. Intermittent citation-label mistakes are corrected once without relaxing validation or silently accepting unsupported labels.
+
+**Verification:** Docker reported hybrid retrieval, 44 chunks, and a configured provider. Backend tests passed 16 checks; offline evaluation passed 15/15; the final live local-model evaluation passed 13/13. The initially failing Chinese case passed three consecutive targeted reruns after the prompt change. Hybrid smoke tests returned a grounded English answer citing pages 8 and 16 and a grounded Simplified Chinese answer citing pages 10, 12, and 18. `.env` is ignored by Git.
+
+**AI assistance:** The primary coordinator reproduced and diagnosed the live-model failure after the earlier exploration, planning, and implementation agents completed their assigned scopes. No commit or push was performed.
+
+## 2026-11-18 - Add persistent repository agent instructions
+
+**Why:** Future coding agents need the same product boundaries, grounding standards, verification expectations, logging format, model-routing honesty, and Git approval rule established during this implementation session.
+
+**Where:** `AGENTS.md`.
+
+**How:** Added repository-wide instructions covering required context, insurance safety, source grounding, task-specific development agents, mandatory Why/Where/How/Impact/Verification logging, Docker and evaluation commands, secret handling, and explicit approval before commits or external actions.
+
+**Impact:** Subsequent agents receive consistent project guidance automatically and are less likely to over-engineer the runtime, misstate evaluation evidence, omit the development log, expose credentials, or commit without approval.
+
+**Verification:** Confirmed `AGENTS.md` is repository-scoped, references existing project files and working commands, includes the installed Postman CLI note, and preserves the user's no-commit/no-push rule.
+
+**AI assistance:** The primary coordinator distilled confirmed project decisions and the user's explicit instructions. No commit or push was performed.
+
+## 2026-11-20 - Link brochure citations and add submission checks
+
+**Why:** Reviewers need to inspect the original evidence and reproduce the chatbot's key flows.
+
+**Where:** The brochure API route, source cards, backend tests, README, and evaluation guide.
+
+**How:** Serve the bundled PDF inline and link each source card to its PDF page. Add regression tests for PDF delivery and conversation history forwarding, plus a manual walkthrough for bilingual answers, citations, follow-ups, and abstention.
+
+**Impact:** Reviewers can verify evidence from the chat and repeat the demo without guessing which questions to ask.
+
+**Verification:** 28 backend tests and 15 offline evaluation cases passed. Docker rebuilt and served the frontend and an exact copy of the original PDF. Browser PDF page navigation and live follow-up answer quality were not verified in this run.
+
+**AI assistance:** The primary Codex agent implemented and checked the changes.
+
+## Make model temperature optional and refine the product voice
+
+**Why:** Some compatible models reject explicit temperature values. The chatbot and website also need a consistent educational voice.
+
+**Where:** Provider settings and request adapter, live evaluator, environment template, chatbot prompt, website copy, and README.
+
+**How:** Omit temperature by default and send an explicit value when configured. Use a courteous, measured style in every reply language, with plain explanations and material conditions beside the relevant claims. Apply the same tone to the welcome and error copy.
+
+**Impact:** Providers can use their own generation defaults, and readers get a clearer explanation of what the tutor can help them understand.
+
+**Verification:** Docker build, 30 backend tests, and 15 offline evaluation cases passed. Mocked requests covered blank temperature and explicit zero. Live voice quality was not assessed.
+
+**AI assistance:** The primary Codex agent implemented and verified the changes.
+
+## Enforce adapter boundaries and isolate answer translation
+
+**Why:** The Dune method calls for mechanically enforced dependencies and clear feature ownership.
+
+**Where:** Backend architecture tests, the React chat shell, and the answer translation feature.
+
+**How:** Check static Python imports for adapter dependencies on higher layers or sibling adapters. Move translation requests, cached variants, and controls into a feature module. The chat shell owns original conversation history, and the feature owns displayed variants.
+
+**Impact:** Invalid imports fail with guidance on where to wire the dependency. Switching answer languages keeps the original conversation history stable. If regeneration withholds a previously grounded answer, the original stays visible and the user can retry.
+
+**Verification:** 36 backend tests and 15 offline evaluation cases passed. The Docker build compiled the frontend. Browser interaction and live generation were not exercised in this pass.
+
+**AI assistance:** The primary Codex agent implemented and verified the changes.

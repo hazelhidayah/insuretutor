@@ -1,6 +1,6 @@
 # InsureTutor
 
-InsureTutor is an evidence-first AI tutor for members of the public who are trying to understand the FLEXI-ULife Prime Saver insurance plan. It answers in English, Simplified Chinese, or Traditional Chinese and exposes the brochure pages behind each supported answer.
+InsureTutor is an evidence-first AI tutor for members of the public who are trying to understand the FLEXI-ULife Prime Saver insurance plan. It answers in English or Simplified Chinese, lets users switch an existing answer between those languages, and exposes the brochure pages behind each supported answer.
 
 This repository is a take-home demo. It is educational software, not a suitability assessment, quotation tool, or replacement for the policy contract or a qualified adviser.
 
@@ -68,7 +68,7 @@ python scripts/build_corpus.py
 Current controls include:
 
 - prompt-injection pattern detection in English and Chinese;
-- a retrieval-confidence gate for unsupported questions;
+- a retrieval-confidence gate, with conservative English term and Chinese bigram coverage checks before ranked passages are treated as evidence;
 - a system policy limiting answers to the supplied brochure;
 - explicit boundaries around personalised recommendations and financial, legal, tax, or underwriting advice;
 - instructions to distinguish guaranteed and non-guaranteed values;
@@ -85,10 +85,25 @@ These controls reduce risk but do not prove that every generated statement is en
 | `MODEL_BASE_URL` | OpenAI-compatible API root ending before `/chat/completions` | `https://api.openai.com/v1` |
 | `MODEL_API_KEY` | Provider API key | none |
 | `MODEL_NAME` | Provider model identifier | `gpt-4.1-mini` |
+| `MODEL_TEMPERATURE` | Optional generation setting from 0 to 2. Leave blank to use the provider default. | unset |
 | `EMBEDDING_MODEL` | Local FastEmbed model | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` |
 | `RETRIEVAL_TOP_K` | Maximum evidence chunks supplied to the model | `6` |
 
 No secret is required for document retrieval. Never commit `.env`.
+
+InsureTutor uses a courteous, plain-language voice inspired by the brochure. Answers lead with the explanation and keep important conditions close to the claims they qualify.
+
+### Local Ollama provider
+
+Ollama exposes an OpenAI-compatible endpoint and can be used without a hosted API key. When the application runs inside Docker on macOS, use:
+
+```dotenv
+MODEL_BASE_URL=http://host.docker.internal:11434/v1
+MODEL_API_KEY=ollama-local
+MODEL_NAME=qwen2.5:7b
+```
+
+The model must already be installed and the Ollama service must be running on the host. `MODEL_API_KEY` is a non-secret compatibility value ignored by Ollama. The project `.env` remains excluded from Git.
 
 ## Development
 
@@ -111,6 +126,15 @@ npm run dev
 ```
 
 The Vite development server proxies `/api` to FastAPI on port 8000.
+
+Run the offline evaluation suite with `PYTHONPATH=backend python -m app.evaluation`. It uses scripted model responses and does not need a paid model. See [evaluation](docs/evaluation.md) for optional live-provider execution and the limits of these checks.
+
+## Demo walkthrough
+
+1. Start the app using [Run with Docker](#run-with-docker). Ask “Is the 4% interest rate guaranteed?” and check whether the answer distinguishes the assumed rate from the conditional guarantee.
+2. Select a citation marker, then choose **Open brochure at page …** in the source desk. Compare the answer's numbers and conditions with the original page.
+3. Choose **简体** under the answer, then switch back to English. Check that the Simplified Chinese answer retains the qualification and has inspectable citations.
+4. Ask “Does that guarantee apply before 15 years?” to check conversational context. Then ask for the insurer's current credit rating or a personalised buying recommendation to see where the tutor should abstain.
 
 ## Example conversations
 
@@ -144,7 +168,7 @@ The Vite development server proxies `/api` to FastAPI on port 8000.
 - The brochure's bilingual layout can produce imperfect extracted reading order.
 - Citation-label validation confirms that cited sources were retrieved, not that every clause of the answer is logically entailed.
 - Conversation state lives in the browser request history and is not persisted.
-- Retrieval thresholds require evaluation against a larger multilingual question set.
+- Retrieval thresholds require evaluation against a larger multilingual question set; the coverage checks can reject valid paraphrases and do not prove semantic relevance.
 - The local embedding model increases image size and first-start time.
 
 ## Project records
@@ -152,5 +176,6 @@ The Vite development server proxies `/api` to FastAPI on port 8000.
 - [Product context](PRODUCT.md)
 - [Architecture decision](docs/decisions/0001-modular-monolith.md)
 - [Development log](docs/development-log.md)
-- [Evaluation plan](docs/evaluation.md)
+- [Evaluation](docs/evaluation.md)
+- [AI-assisted development workflow](docs/ai-development-workflow.md)
 
