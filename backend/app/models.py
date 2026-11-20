@@ -10,7 +10,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2_000)
-    history: list[ChatMessage] = Field(default_factory=list)
+    history: list[ChatMessage] = Field(default_factory=list, max_length=24)
     language: Literal["auto", "en", "zh-CN", "zh-TW"] = "auto"
 
 

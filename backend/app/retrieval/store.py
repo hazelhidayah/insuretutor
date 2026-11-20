@@ -11,7 +11,42 @@ from pathlib import Path
 import numpy as np
 
 
+# Function words do not demonstrate that a passage addresses a question.
+QUERY_STOP_WORDS = frozenset(
+    "a an and are as at be can could did do does for from had has have how i if in is it "
+    "may me my of on or should the their this to was what when where which who why will with would "
+    "actually please tell explain".split()
+)
+WORD_RE = re.compile(r"[a-z]+|[0-9]+", re.IGNORECASE)
+CJK_SEQUENCE_RE = re.compile(r"[\u3400-\u9fff]+")
 TOKEN_RE = re.compile(r"[a-z0-9]+|[\u3400-\u9fff]", re.IGNORECASE)
+CJK_QUERY_LEAD_INS = ("我想知道", "我想了解", "請問", "请问")
+CJK_VARIANT_TRANSLATION = str.maketrans(
+    {
+        "证": "證",
+        "条": "條",
+        "么": "麼",
+        "这": "這",
+        "与": "與",
+        "为": "為",
+        "于": "於",
+        "会": "會",
+        "将": "將",
+        "应": "應",
+        "须": "須",
+        "里": "裡",
+        "险": "險",
+        "据": "據",
+        "单": "單",
+        "静": "靜",
+        "请": "請",
+        "产": "產",
+        "册": "冊",
+        "计": "計",
+        "费": "費",
+        "风": "風",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -105,6 +140,35 @@ class RetrievalStore:
         query_embedding = self._normalise(query_embedding)[0]
         return self._embeddings @ query_embedding
 
+    @staticmethod
+    def _query_has_evidence(query: str, text: str) -> bool:
+        """Require substantive query content in a passage before trusting its rank.
+
+        This deliberately conservative check supplements relative lexical and dense
+        rankings. It reduces obvious out-of-scope matches, but it is not a semantic
+        entailment check and can reject valid paraphrases.
+        """
+        cjk_sequences = CJK_SEQUENCE_RE.findall(query)
+        if cjk_sequences:
+            compact_query = "".join(cjk_sequences).translate(CJK_VARIANT_TRANSLATION)
+            for lead_in in CJK_QUERY_LEAD_INS:
+                compact_query = compact_query.removeprefix(lead_in.translate(CJK_VARIANT_TRANSLATION))
+            compact_text = "".join(CJK_SEQUENCE_RE.findall(text)).translate(CJK_VARIANT_TRANSLATION)
+            query_bigrams = {
+                compact_query[index : index + 2]
+                for index in range(max(0, len(compact_query) - 1))
+            }
+            if not query_bigrams:
+                return compact_query in compact_text
+            matched = sum(bigram in compact_text for bigram in query_bigrams)
+            return matched >= 2 and matched / len(query_bigrams) >= 0.3
+
+        terms = set(WORD_RE.findall(query.lower())) - QUERY_STOP_WORDS
+        if not terms:
+            return False
+        document_terms = set(WORD_RE.findall(text.lower()))
+        return len(terms & document_terms) / len(terms) >= 0.6
+
     def search(self, query: str, top_k: int = 6) -> list[RetrievedChunk]:
         lexical = self._lexical_scores(query)
         dense = self._dense_scores(query)
@@ -114,6 +178,9 @@ class RetrievalStore:
         results = []
         for index in ranked_indices:
             chunk = self.chunks[int(index)]
+            score = float(combined[index])
+            if not self._query_has_evidence(query, chunk["text"]):
+                score = 0.0
             results.append(
                 RetrievedChunk(
                     id=chunk["id"],
@@ -121,9 +188,11 @@ class RetrievalStore:
                     page=chunk["page"],
                     section=chunk["section"],
                     text=chunk["text"],
-                    score=float(combined[index]),
+                    score=score,
                 )
             )
+        # Keep passages that satisfy the evidence check ahead of zero-confidence matches.
+        results.sort(key=lambda chunk: chunk.score, reverse=True)
         return results
 
 
