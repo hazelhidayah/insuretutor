@@ -37,6 +37,7 @@ COOLING_OFF = ReviewedClause(
         "保单冷静期从哪一天开始计算", "冷静期从哪一天开始算", "冷静期从什么时候开始",
         "保單的冷靜期是多少天", "保單冷靜期從哪一天開始計算",
         "how long is the cooling-off period", "when does the cooling-off period start",
+        "how much time do i have to cancel my policy",
     }),
     page=15,
     sources=(
@@ -53,7 +54,10 @@ COOLING_OFF = ReviewedClause(
 )
 
 WITHDRAWALS = ReviewedClause(
-    questions=frozenset({"定期提款有什么条件", "定期提款有哪些条件", "定期提款有什麼條件", "定期提款有甚麼條件"}),
+    questions=frozenset({
+        "定期提款有什么条件", "定期提款有哪些条件", "定期提款有什麼條件", "定期提款有甚麼條件",
+        "我能定期取钱吗", "我能定期取錢嗎",
+    }),
     page=12,
     sources=(
         ("prime-saver-p12-c3", "6c0e8b7377658249492b3319ec87adc7141261aefaf77dd4f099b82ed6c00e61"),
@@ -68,7 +72,26 @@ WITHDRAWALS = ReviewedClause(
     },
 )
 
-CLAUSES = (COOLING_OFF, WITHDRAWALS)
+PREMIUM_PAUSE = ReviewedClause(
+    questions=frozenset({
+        "can i stop paying premiums temporarily", "can i pause premium payments",
+        "我可以暂停交保费吗", "我可以暫停交保費嗎",
+    }),
+    page=10,
+    sources=(
+        ("prime-saver-p10-c2", "e1a53cda2413a50fe4bada11c7713ba6525b016e5ed9fc99d00c2f790f7f427e"),
+        ("prime-saver-p10-c1", "c426b2222dbc1c57bdcb8bc06834ed456f1a5c3165909b3427b60c52ad65fdf6"),
+    ),
+    section="Financial Flexibilities, Skip Premium Payments / 提存彈性，暫停繳付保費",
+    excerpt_anchor="Cash withdrawal, reducing the premium amount, or skipping premium payments",
+    answers={
+        "en": "The brochure says you can temporarily skip premium payments if the policy has accumulated enough cash value. Monthly charges still apply. Skipping payments affects the cash value the policy accumulates. If the cash value cannot cover the monthly charges, the policy lapses with zero value. [S1]",
+        "zh-CN": "根据产品册，如果保单已累积足够的现金价值，您可以暂停缴付保费。暂停缴费会影响现金价值的累积，每月费用仍会扣除。如果现金价值不足以支付每月费用，保单将终止且没有任何价值。[S1]",
+        "zh-TW": "根據產品冊，如果保單已累積足夠的現金價值，您可以暫停繳付保費。暫停繳費會影響現金價值的累積，每月費用仍會扣除。如果現金價值不足以支付每月費用，保單將終止且沒有任何價值。[S1]",
+    },
+)
+
+CLAUSES = (COOLING_OFF, WITHDRAWALS, PREMIUM_PAUSE)
 COOLING_FOLLOW_UPS = frozenset({
     "那从哪一天开始算", "那從哪一天開始算", "那从什么时候开始算", "when does it start",
 })

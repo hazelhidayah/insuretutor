@@ -73,6 +73,19 @@ def test_clock_rule_does_not_block_policy_timing_questions():
     assert not clearly_outside_scope("What time period applies to the policy?")
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("answers", [
+    ("INSUFFICIENT_EVIDENCE",),
+    ("A match alone does not answer this.", "INSUFFICIENT_EVIDENCE"),
+])
+async def test_model_abstention_stays_uncited_after_a_retrieval_match(answers):
+    provider = ScriptedProvider(*answers)
+    outcome = await service_for(provider).answer(ChatRequest(message="Is this guarantee available in France?"))
+    assert not outcome.grounded and outcome.citations == []
+    assert "couldn’t find enough support" in outcome.answer
+    assert len(provider.prompts) == len(answers)
+
+
 def test_private_and_unlabelled_chunks_are_excluded_before_indexing(tmp_path):
     path = tmp_path / "corpus.json"
     base = {"source": "Brochure", "section": "Rates", "page": 1}

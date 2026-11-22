@@ -51,7 +51,7 @@ See [ADR 0001](docs/decisions/0001-modular-monolith.md) for the decision and tra
 
 ## Retrieval and citations
 
-The cooling-off deadline and Chinese periodic-withdrawal examples use reviewed answers for narrowly matched questions. The answers cite the original PDF and are withheld if the indexed source passages change. Other supported questions use model-generated answers with citation checks.
+Selected cooling-off, periodic-withdrawal and premium-pause questions use reviewed answers. The answers cite the original PDF and are withheld if the indexed source passages change. Other supported questions use model-generated answers with citation checks.
 
 I kept embeddings in the backend with FastEmbed and a multilingual ONNX model. The evaluator can bring a chat-only endpoint. The small corpus fits in memory. The trade-off is a larger runtime image and a first-start model download. A separate embedding container would make sense if I needed to scale embedding work independently.
 

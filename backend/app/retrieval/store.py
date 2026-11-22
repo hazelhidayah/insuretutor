@@ -17,12 +17,19 @@ from ..guardrails.retrieval import public_chunk
 QUERY_STOP_WORDS = frozenset(
     "a an and are as at be can could did do does for from had has have how i if in is it "
     "may me my of on or should the their this to was what when where which who why will with would "
-    "actually please tell explain".split()
+    "actually please tell explain help you get there now today current time date much s".split()
 )
 WORD_RE = re.compile(r"[a-z]+|[0-9]+", re.IGNORECASE)
 CJK_SEQUENCE_RE = re.compile(r"[\u3400-\u9fff]+")
 TOKEN_RE = re.compile(r"[a-z0-9]+|[\u3400-\u9fff]", re.IGNORECASE)
 CJK_QUERY_LEAD_INS = ("我想知道", "我想了解", "請問", "请问")
+QUERY_ALIASES = (
+    (re.compile(r"\b(?:stop|pause) paying (?:my )?premiums? temporarily\b|\bpause (?:my )?premium payments?\b", re.IGNORECASE),
+     "skip premium payments"),
+    (re.compile(r"暂停交保费|暫停交保費"), "暫停繳付保費"),
+    (re.compile(r"\b(?:withdraw money|take money out)\b", re.IGNORECASE), "withdraw cash value"),
+    (re.compile(r"定期取钱|定期取錢"), "定期提款"),
+)
 CJK_VARIANT_TRANSLATION = str.maketrans(
     {
         "证": "證",
@@ -172,17 +179,21 @@ class RetrievalStore:
         return len(terms & document_terms) / len(terms) >= 0.6
 
     def search(self, query: str, top_k: int = 6) -> list[RetrievedChunk]:
-        lexical = self._lexical_scores(query)
+        evidence_query = query
+        for pattern, replacement in QUERY_ALIASES:
+            evidence_query = pattern.sub(replacement, evidence_query)
+        lexical = self._lexical_scores(evidence_query)
         dense = self._dense_scores(query)
         combined = lexical if self.mode == "lexical" else (0.42 * lexical + 0.58 * dense)
-        ranked_indices = np.argsort(-combined)[:top_k]
+        grounded_scores = np.array([
+            score if self._query_has_evidence(evidence_query, chunk["text"]) else 0.0
+            for score, chunk in zip(combined, self.chunks)
+        ])
+        ranked_indices = np.lexsort((-combined, -grounded_scores))[:top_k]
 
         results = []
         for index in ranked_indices:
             chunk = self.chunks[int(index)]
-            score = float(combined[index])
-            if not self._query_has_evidence(query, chunk["text"]):
-                score = 0.0
             results.append(
                 RetrievedChunk(
                     id=chunk["id"],
@@ -190,11 +201,9 @@ class RetrievalStore:
                     page=chunk["page"],
                     section=chunk["section"],
                     text=chunk["text"],
-                    score=score,
+                    score=float(grounded_scores[index]),
                 )
             )
-        # Keep passages that satisfy the evidence check ahead of zero-confidence matches.
-        results.sort(key=lambda chunk: chunk.score, reverse=True)
         return results
 
     def public_passage(self, chunk_id: str) -> RetrievedChunk | None:

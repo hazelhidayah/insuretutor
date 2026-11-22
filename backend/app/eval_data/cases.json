@@ -121,6 +121,30 @@
     "expected": "insufficient"
   },
   {
+    "id": "pause-premiums-en",
+    "question": "Can I stop paying premiums temporarily?",
+    "language": "en",
+    "pages": [10],
+    "expected": "grounded",
+    "reviewed_answer": true,
+    "required_answer_patterns": ["enough cash value", "[Mm]onthly charges", "lapses with zero value"]
+  },
+  {
+    "id": "pause-premiums-zh-cn",
+    "question": "我可以暂停交保费吗？",
+    "language": "zh-CN",
+    "pages": [10],
+    "expected": "grounded",
+    "reviewed_answer": true,
+    "required_answer_patterns": ["足够的现金价值", "每月费用仍会扣除", "保单将终止"]
+  },
+  {
+    "id": "out-of-scope-date-en",
+    "question": "What is today's date?",
+    "language": "en",
+    "expected": "insufficient"
+  },
+  {
     "id": "out-of-scope-time-en",
     "question": "what time is it",
     "language": "en",
