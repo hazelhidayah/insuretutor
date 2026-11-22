@@ -1,5 +1,31 @@
 # Development Log
 
+## Keep source evidence visible in long conversations
+
+**Why:** The source panel stretched to the full conversation height, leaving its links above the visible area after several answers.
+
+**Where:** Chat citation selection and source panel layout.
+
+**How:** Pin the desktop panel inside the evidence column and scroll long citation lists independently. Scope each selection to its answer because citation labels can repeat. On narrow screens, bring the panel into view when a citation is selected.
+
+**Impact:** Readers can inspect the current or an older answer's sources while browsing the conversation. Replies without citations show an explicit empty state.
+
+**Verification:** Docker build and 72 backend tests passed. Browser checks confirmed a visible desktop panel after four replies, correct page selection when clicking an older citation, and visible, focused evidence on mobile.
+
+## Separate unrelated requests from valid policy paraphrases
+
+**Why:** Generic word overlap let clock and date queries retrieve brochure passages, while valid questions about pausing payments or withdrawing money could lose relevant evidence.
+
+**Where:** Retrieval, chat abstention, reviewed clauses, and regression tests.
+
+**How:** Ignore generic date and time terms in the English evidence check, map a few common policy paraphrases to brochure terminology, and rank passages after checking relevance. Treat the model's insufficient-evidence marker as an uncited refusal. Extend source-verified answers for observed withdrawal and cancellation paraphrases and for premium-pause conditions.
+
+**Impact:** Unsupported questions can stop without citations. The tested English and Chinese policy examples preserve their conditions and source links.
+
+**Verification:** 72 backend tests and 25 offline evaluation cases passed. The rebuilt Docker app in hybrid mode declined clock, date, and directions queries and returned the expected cited answers for four policy questions.
+
+**AI assistance:** The primary Codex agent implemented and checked the changes.
+
 ## 2026-11-22 - Reject current-time questions before retrieval
 
 **Why:** A live clock question matched incidental uses of “time” in the brochure and produced a slow refusal with irrelevant citations.

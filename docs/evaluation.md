@@ -30,8 +30,10 @@ Future evaluation work includes a larger multilingual set, live comparison of le
 
 ## Latest local verification
 
-On 22 November 2026, the local working tree passed **59 backend tests and 21 offline evaluation cases**. The additions cover invalid API requests, a cited Chinese follow-up over HTTP, mixed-quality retrieval results, percentages found only in uncited evidence, reviewer outages, and English and Chinese refusals.
+The submission candidate passed **72 backend tests and 25 offline evaluation cases**. Coverage includes invalid API requests, a cited Chinese follow-up over HTTP, mixed-quality retrieval results, percentages found only in uncited evidence, and reviewer outages. The scope cases check uncited refusals alongside supported policy paraphrases in English and Chinese.
 
 A Docker smoke test with lexical retrieval confirmed that the app serves the homepage, its compiled JavaScript, and the original PDF. An unknown route returned 404, and the reviewed Chinese cooling-off request returned a citation to PDF page 15.
+
+In the latest hybrid Docker smoke test, clock, date and directions requests returned uncited refusals. Reviewed premium-pause, withdrawal and cancellation questions kept their conditions and PDF citations. The browser walkthrough also checked that the evidence panel stays visible after four answers and that an older citation still opens the correct evidence on desktop and mobile.
 
 In the preceding browser walkthrough using the hybrid build and local Ollama `qwen2.5:7b`, the generated English rate answer preserved the 15-year condition. The reviewed Chinese withdrawal and cooling-off answers retained their key conditions, and the browser opened PDF citation links. One free-form Chinese rate answer was withheld after failing citation validation. The full live-provider suite was not rerun for this documentation and test update.
