@@ -121,6 +121,12 @@
     "expected": "insufficient"
   },
   {
+    "id": "out-of-scope-time-en",
+    "question": "what time is it",
+    "language": "en",
+    "expected": "insufficient"
+  },
+  {
     "id": "out-of-scope-directions-en",
     "question": "Can you give me directions to McDonalds?",
     "language": "en",

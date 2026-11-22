@@ -1,5 +1,17 @@
 # Development Log
 
+## 2026-11-22 - Reject current-time questions before retrieval
+
+**Why:** A live clock question matched incidental uses of “time” in the brochure and produced a slow refusal with irrelevant citations.
+
+**Where:** Input guardrails, guardrail tests, and evaluation cases.
+
+**How:** Recognise common English and Chinese clock questions before retrieval. Test that neither retrieval nor generation runs and that policy-timing questions remain outside this rule.
+
+**Impact:** Matched clock questions receive an uncited refusal without paying for retrieval or inference.
+
+**Verification:** 64 backend tests and 22 offline evaluation cases passed.
+
 ## 2026-11-22 - Round out tests and explain the design choices
 
 **Why:** The existing tests covered the core pipeline. The HTTP boundary, mixed-quality retrieval and reviewer outages needed direct coverage, and the README needed to explain why the design fits the demo.

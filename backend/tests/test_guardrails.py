@@ -5,6 +5,7 @@ import pytest
 
 from app.chat import ChatService
 from app.guardrails import looks_like_prompt_injection, valid_source_labels
+from app.guardrails.input import clearly_outside_scope
 from app.models import ChatRequest
 from app.providers import ModelProviderError
 from app.retrieval import RetrievedChunk, RetrievalStore
@@ -53,6 +54,23 @@ async def test_blocks_untrusted_requests_before_model_call(question, text):
     outcome = await service_for(provider, text).answer(ChatRequest(message=question))
     assert not outcome.grounded and not outcome.citations
     assert not provider.prompts
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("question", ["what time is it", "What time is it now?", "请问现在几点了？", "現在幾點？"])
+async def test_clock_questions_skip_retrieval_and_generation(question):
+    def unexpected_search(*_):
+        pytest.fail("Clock questions must not reach retrieval")
+
+    provider = ScriptedProvider()
+    service = ChatService(SimpleNamespace(search=unexpected_search), provider, 6, 12)
+    outcome = await service.answer(ChatRequest(message=question))
+    assert not outcome.grounded and outcome.citations == []
+    assert not provider.prompts
+
+
+def test_clock_rule_does_not_block_policy_timing_questions():
+    assert not clearly_outside_scope("What time period applies to the policy?")
 
 
 def test_private_and_unlabelled_chunks_are_excluded_before_indexing(tmp_path):

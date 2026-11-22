@@ -34,7 +34,8 @@ def redact_sensitive(text: str) -> str:
 def clearly_outside_scope(message: str) -> bool:
     return bool(re.fullmatch(
         r"(?:what is the weather(?: today)?|how do i make pancakes|"
-        r"今天天气怎么样|今天天氣怎麼樣|怎樣製作班戟)[?？。.!！\s]*",
-        message.strip(),
+        r"what time is it(?: (?:now|in singapore))?|what(?: is|['’]s) the current time|"
+        r"今天天气怎么样|今天天氣怎麼樣|怎樣製作班戟|(?:请问|請問)?\s*(?:现在|現在)几点(?:了)?|(?:請問)?\s*現在幾點(?:了)?)[?？。.!！\s]*",
+        " ".join(unicodedata.normalize("NFKC", message).split()),
         flags=re.IGNORECASE,
     ))
