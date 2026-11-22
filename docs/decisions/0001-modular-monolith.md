@@ -24,5 +24,5 @@ Generate embeddings locally. Do not require an external vector database, message
 ## Consequences
 
 - The application scales as one unit for now.
-- The API image includes local retrieval dependencies and model weights.
+- The API image includes local retrieval dependencies. Model weights download at first startup and are cached in a Docker volume.
 - Ingestion/indexing, retrieval, model gateway, and conversation persistence can become separate services later if their scaling, ownership, or release requirements diverge.

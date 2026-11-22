@@ -4,8 +4,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .chat import ChatService
@@ -38,11 +39,19 @@ async def lifespan(app: FastAPI):
         provider,
         settings.retrieval_top_k,
         settings.max_history_messages,
+        review_answers=settings.review_answers,
     )
     yield
 
 
 app = FastAPI(title="InsureTutor API", version="0.1.0", lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def invalid_request(_request: Request, _error: RequestValidationError) -> JSONResponse:
+    return JSONResponse(status_code=422, content={"detail": "Invalid request. Check the request schema and limits."})
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -87,10 +96,7 @@ if settings.static_path.exists():
     if assets_path.exists():
         app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
 
-    @app.get("/{full_path:path}")
-    async def frontend(full_path: str):
-        candidate = settings.static_path / full_path
-        if full_path and candidate.is_file():
-            return FileResponse(candidate)
+    @app.get("/")
+    async def frontend() -> FileResponse:
         return FileResponse(settings.static_path / "index.html")
 

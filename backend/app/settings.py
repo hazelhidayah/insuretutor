@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     model_api_key: str = ""
     model_name: str = "gpt-4.1-mini"
     model_temperature: float | None = Field(default=None, ge=0, le=2)
+    review_answers: bool = False
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     embedding_cache_path: Path = Path(".cache/fastembed")
     retrieval_top_k: int = 6

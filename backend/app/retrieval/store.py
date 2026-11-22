@@ -10,6 +10,8 @@ from pathlib import Path
 
 import numpy as np
 
+from ..guardrails.retrieval import public_chunk
+
 
 # Function words do not demonstrate that a passage addresses a question.
 QUERY_STOP_WORDS = frozenset(
@@ -69,7 +71,7 @@ class RetrievalStore:
         embedding_cache_path: Path | None = None,
     ) -> None:
         payload = json.loads(corpus_path.read_text(encoding="utf-8"))
-        self.chunks: list[dict] = payload["chunks"]
+        self.chunks: list[dict] = [chunk for chunk in payload["chunks"] if public_chunk(chunk)]
         self._documents = [chunk["text"] for chunk in self.chunks]
         self._token_counts = [Counter(self._tokens(text)) for text in self._documents]
         self._document_frequency = Counter(
@@ -194,6 +196,12 @@ class RetrievalStore:
         # Keep passages that satisfy the evidence check ahead of zero-confidence matches.
         results.sort(key=lambda chunk: chunk.score, reverse=True)
         return results
+
+    def public_passage(self, chunk_id: str) -> RetrievedChunk | None:
+        for chunk in self.chunks:
+            if chunk["id"] == chunk_id:
+                return RetrievedChunk(chunk_id, chunk["source"], chunk["page"], chunk["section"], chunk["text"], 1.0)
+        return None
 
 
 def stable_chunk_id(source: str, page: int, text: str) -> str:

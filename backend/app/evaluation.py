@@ -54,7 +54,7 @@ async def evaluate(cases: list[dict[str, Any]], store: RetrievalStore, provider:
             language=case["language"],
             history=case.get("history", []),
         )
-        chunks = store.search(case["question"], top_k)
+        chunks = service.retrieve(request) if case["expected"] == "grounded" else []
         response = await service.answer(request)
         expected = case["expected"]
         checks: dict[str, bool] = {}
@@ -70,7 +70,16 @@ async def evaluate(cases: list[dict[str, Any]], store: RetrievalStore, provider:
                 and f"[{c.id}]" in response.answer for c in response.citations
             )
             checks["language_script"] = language_signal(response.answer, request.language)
-            if fixture:
+            if "required_answer_patterns" in case:
+                checks["required_answer_patterns"] = all(
+                    re.search(pattern, response.answer) is not None
+                    for pattern in case["required_answer_patterns"]
+                )
+            if case.get("reviewed_answer"):
+                checks["reviewed_answer_available"] = service.reviewed_clause(request) is not None and response.grounded
+                if fixture:
+                    checks["provider_not_called"] = fixture.calls == 0
+            elif fixture:
                 checks["language_prompt"] = bool(fixture.messages) and (
                     f"Reply in {LANGUAGE_NAMES[request.language]}." in fixture.messages[-1]["content"]
                 )

@@ -1,10 +1,10 @@
 # InsureTutor
 
-InsureTutor is an evidence-first AI tutor for members of the public who are trying to understand the FLEXI-ULife Prime Saver insurance plan. It answers in English or Simplified Chinese, lets users switch an existing answer between those languages, and exposes the brochure pages behind each supported answer.
-
-This repository is a take-home demo. It is educational software, not a suitability assessment, quotation tool, or replacement for the policy contract or a qualified adviser.
+InsureTutor is an evidence-first AI tutor for members of the public who are trying to understand the FLEXI-ULife Prime Saver insurance plan. It answers in English or Simplified Chinese, lets users switch an existing answer between those languages and exposes the brochure pages behind each supported answer.
 
 ## Run with Docker
+
+You’ll need Docker with Compose and access to an OpenAI-compatible chat model. The brochure and its index come with the repo.
 
 1. Copy the environment template:
 
@@ -12,7 +12,7 @@ This repository is a take-home demo. It is educational software, not a suitabili
    cp .env.example .env
    ```
 
-2. Set an OpenAI-compatible chat endpoint, API key, and model in `.env`.
+2. Set an OpenAI-compatible chat endpoint, API key and model in `.env`.
 
 3. Build and start the application:
 
@@ -22,7 +22,7 @@ This repository is a take-home demo. It is educational software, not a suitabili
 
 4. Open [http://localhost:8000](http://localhost:8000).
 
-The first start downloads the local multilingual embedding model into the named `model-cache` Docker volume. Later starts reuse it. The model endpoint is used only for answer generation; retrieval does not require a provider embeddings API.
+The first start downloads the local multilingual embedding model into the named `model-cache` Docker volume. Later starts reuse it. The configured endpoint handles generation and optional answer review. Retrieval runs locally.
 
 ## Architecture
 
@@ -43,19 +43,21 @@ Browser
           └── structured response
 ```
 
-The application is a modular monolith. React is compiled during the multi-stage Docker build, then FastAPI serves both the API and static interface from one container. Internal modules preserve clear boundaries without introducing deployment overhead that the small demo does not need.
+I chose a **modular monolith** because this take-home has one brochure and one chat flow. One container is easy for a reviewer to run. The Docker build compiles React, then FastAPI serves the UI and the API. Retrieval, model access and guardrails have their own modules. The tests check that those modules keep their dependency boundaries.
+
+If the corpus grew enough that indexing needed its own schedule, I’d split ingestion and indexing first. I’d separate retrieval if it needed independent scaling, or model access if several apps needed shared provider routing and quotas. Each split would introduce another service to run and monitor.
 
 See [ADR 0001](docs/decisions/0001-modular-monolith.md) for the decision and trade-offs.
 
 ## Retrieval and citations
 
-The ingestion script extracts the brochure page by page and preserves source, page, section, and chunk identifiers. Retrieval combines:
+The cooling-off deadline and Chinese periodic-withdrawal examples use reviewed answers for narrowly matched questions. The answers cite the original PDF and are withheld if the indexed source passages change. Other supported questions use model-generated answers with citation checks.
 
-- local multilingual ONNX embeddings from `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`;
-- lexical token matching;
-- character trigrams, which improve matching across unsegmented Chinese text.
+I kept embeddings in the backend with FastEmbed and a multilingual ONNX model. The evaluator can bring a chat-only endpoint. The small corpus fits in memory. The trade-off is a larger runtime image and a first-start model download. A separate embedding container would make sense if I needed to scale embedding work independently.
 
-Retrieved passages receive request-local labels such as `[S1]`. The language model may cite only these labels. The API rejects a generated answer if it contains an unknown label or no valid source label, then maps valid labels back to structured page metadata for the interface.
+Hybrid search combines **meaning** from multilingual embeddings with **exact matches** from tokens and character trigrams. That helps when a Simplified Chinese question refers to a brochure passage written in Traditional Chinese, or when a rate or product term needs an exact match. Lexical search is the fallback if embeddings fail to load. The evidence gate is deliberately conservative and can reject a valid paraphrase.
+
+I extract and index the brochure by PDF page so users can check the source themselves. The model receives relevant excerpts with labels like `[S1]`. The API validates the labels, retries a citation failure once and turns accepted labels into page links. Citations use the PDF viewer’s page numbering, which can differ from the number printed on the brochure.
 
 Rebuild the source corpus after replacing the PDF:
 
@@ -65,18 +67,13 @@ python scripts/build_corpus.py
 
 ## Guardrails
 
-Current controls include:
+I chose lightweight checks so obvious off-topic or unsupported requests can stop before a model call.
 
-- prompt-injection pattern detection in English and Chinese;
-- a retrieval-confidence gate, with conservative English term and Chinese bigram coverage checks before ranked passages are treated as evidence;
-- a system policy limiting answers to the supplied brochure;
-- explicit boundaries around personalised recommendations and financial, legal, tax, or underwriting advice;
-- instructions to distinguish guaranteed and non-guaranteed values;
-- request and conversation-history size limits;
-- post-generation citation-label validation;
-- a visible ungrounded state when the system withholds an answer.
+- **Input and retrieval.** Validate request limits, screen messages and passages for common instruction overrides, mask recognised sensitive data before model calls and admit only relevant, explicitly public passages.
+- **Answer.** Ask the model to stay within the brochure and avoid personalised advice. Check citations, recognised sensitive output, a limited set of harmful phrases and whether each stated percentage occurs in the cited evidence. Withhold answers that fail the checks.
+- **Optional review.** Set `REVIEW_ANSWERS=true` to add a second model call for claim and policy review. This adds latency and can withhold valid answers. It defaults to off.
 
-These controls reduce risk but do not prove that every generated statement is entailed by its citation. Numeric-claim verification and a model-based entailment check are deliberate next steps described under limitations.
+The percentage check confirms a number appears in the cited passage. A reader still needs to check whether the answer puts it in the right context and preserves the conditions. The filters cover recognised patterns. Personalised-advice handling also depends on retrieval and model instructions. Private documents would need authenticated users and server-enforced access controls.
 
 ## Provider configuration
 
@@ -86,10 +83,11 @@ These controls reduce risk but do not prove that every generated statement is en
 | `MODEL_API_KEY` | Provider API key | none |
 | `MODEL_NAME` | Provider model identifier | `gpt-4.1-mini` |
 | `MODEL_TEMPERATURE` | Optional generation setting from 0 to 2. Leave blank to use the provider default. | unset |
+| `REVIEW_ANSWERS` | Enable a second model call to review generated answers | `false` |
 | `EMBEDDING_MODEL` | Local FastEmbed model | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` |
 | `RETRIEVAL_TOP_K` | Maximum evidence chunks supplied to the model | `6` |
 
-No secret is required for document retrieval. Never commit `.env`.
+I put model access behind a backend adapter so an evaluator can change the endpoint, key and model in `.env`. The browser calls `POST /api/chat` with the question, reply language and recent conversation history. `GET /api/health` reports the runtime state and `GET /api/brochure` serves the original PDF. Keep provider keys in the ignored `.env` file.
 
 InsureTutor uses a courteous, plain-language voice inspired by the brochure. Answers lead with the explanation and keep important conditions close to the claims they qualify.
 
@@ -127,14 +125,15 @@ npm run dev
 
 The Vite development server proxies `/api` to FastAPI on port 8000.
 
-Run the offline evaluation suite with `PYTHONPATH=backend python -m app.evaluation`. It uses scripted model responses and does not need a paid model. See [evaluation](docs/evaluation.md) for optional live-provider execution and the limits of these checks.
+Run `PYTHONPATH=backend python -m app.evaluation` to check the reviewed answers and the chat pipeline with scripted model responses. See [evaluation](docs/evaluation.md) for live-provider testing and the limits of these checks.
 
 ## Demo walkthrough
 
 1. Start the app using [Run with Docker](#run-with-docker). Ask “Is the 4% interest rate guaranteed?” and check whether the answer distinguishes the assumed rate from the conditional guarantee.
 2. Select a citation marker, then choose **Open brochure at page …** in the source desk. Compare the answer's numbers and conditions with the original page.
-3. Choose **简体** under the answer, then switch back to English. Check that the Simplified Chinese answer retains the qualification and has inspectable citations.
-4. Ask “Does that guarantee apply before 15 years?” to check conversational context. Then ask for the insurer's current credit rating or a personalised buying recommendation to see where the tutor should abstain.
+3. Start a new conversation and choose **定期提款有什么条件？**. Check the separate monthly and annual minimum terms, then switch the answer to English and open PDF page 12.
+4. In a new conversation, ask **保单的冷静期是多少天？**, then **那从哪一天开始算？**. Check that both replies cite PDF page 15 and include the earlier of the two delivery events.
+5. Ask for directions to McDonald's or a personalised buying recommendation. Check that the tutor abstains.
 
 ### Optional demo check: Verify a cited claim
 
@@ -158,13 +157,13 @@ During the interview, show the sentence in the answer and the passage side by si
 
 **User:** 定期提款有什么条件？
 
-**Expected behaviour:** Answer in Simplified Chinese even though the brochure primarily contains Traditional Chinese and English. Cover the minimum policy duration, minimum withdrawal amount and period, and fee waiver, with page citations.
+**Expected behaviour:** Answer in Simplified Chinese even though the brochure primarily contains Traditional Chinese and English. Cover the minimum policy duration, minimum withdrawal amount and period and fee waiver, with page citations.
 
 ### Advice boundary
 
 **User:** I am 30 with two children. Should I buy this plan or invest in an ETF?
 
-**Expected behaviour:** Decline to decide suitability or compare personalised outcomes. Offer to explain documented plan features, charges, risks, and conditions instead.
+**Expected behaviour:** Decline to decide suitability or compare personalised outcomes. Offer to explain documented plan features, charges, risks and conditions instead.
 
 ### Unsupported question
 

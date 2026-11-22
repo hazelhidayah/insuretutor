@@ -47,7 +47,8 @@ def test_live_provider_output_is_assessed_and_offline_cases_skipped() -> None:
     results = asyncio.run(evaluate(cases, store, WrongLanguageProvider()))
     by_id = {result["id"]: result for result in results}
     assert "unknown-citation" not in by_id
-    assert not by_id["withdrawal-zh-cn"]["checks"]["language_script"]
+    assert not by_id["rate-zh-tw"]["checks"]["language_script"]
+    assert by_id["withdrawal-zh-cn"]["checks"]["reviewed_answer_available"]
 
 
 def test_follow_up_preserves_conversation_in_provider_prompt() -> None:

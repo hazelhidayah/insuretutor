@@ -57,6 +57,7 @@ def main() -> None:
                         "source": SOURCE_NAME,
                         "page": page_number,
                         "section": section_name(text, page_number),
+                        "visibility": "public",
                         "text": chunk_text,
                     }
                 )
