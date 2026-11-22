@@ -1,4 +1,4 @@
-import { FormEvent, Fragment, useMemo, useRef, useState } from "react";
+import { FormEvent, Fragment, useRef, useState } from "react";
 
 import type { ApiResponse, AnswerVariant, Citation, ConversationMessage, Language } from "./chat/types";
 import { asAnswerLanguage, languageLabels, selectableLanguages } from "./chat/languages";
@@ -22,7 +22,7 @@ function SourceMark({
   const citation = citations.find((item) => item.id === label);
   if (!citation) return <span>[{label}]</span>;
   return (
-    <button className="source-mark" type="button" onClick={() => onSelect(citation)}>
+    <button className="source-mark" type="button" aria-controls="source-evidence" onClick={() => onSelect(citation)}>
       {label}
     </button>
   );
@@ -55,15 +55,34 @@ function App() {
   const [question, setQuestion] = useState("");
   const [language, setLanguage] = useState<Language>("auto");
   const [loading, setLoading] = useState(false);
-  const [activeCitation, setActiveCitation] = useState<Citation | null>(null);
+  const [evidenceSelection, setEvidenceSelection] = useState<{ messageId: string; citationId: string | null } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const activeRequestRef = useRef<AbortController | null>(null);
+  const evidencePanelRef = useRef<HTMLDivElement>(null);
+  const evidenceListRef = useRef<HTMLDivElement>(null);
 
   const { translating, translate, reset, variants } = useAnswerTranslation();
-  const recentCitations = useMemo(
-    () => messages.slice().reverse().map((message) => ({ ...message, ...variants[message.id]?.displayed })).find((message) => message.citations?.length)?.citations ?? [],
-    [messages, variants],
-  );
+  const evidenceMessage = evidenceSelection
+    ? messages.find((message) => message.id === evidenceSelection.messageId)
+    : messages.slice().reverse().find((message) => message.role === "assistant");
+  const evidenceVariant = evidenceMessage ? variants[evidenceMessage.id] : undefined;
+  const citations = evidenceVariant?.displayed?.citations ?? evidenceMessage?.citations ?? [];
+  const activeCitation = citations.find((citation) => citation.id === evidenceSelection?.citationId) ?? citations[0];
+  const displayedCitations = activeCitation
+    ? [activeCitation, ...citations.filter((citation) => citation !== activeCitation)]
+    : citations;
+
+  function selectCitation(messageId: string, citation: Citation) {
+    setEvidenceSelection({ messageId, citationId: citation.id });
+    requestAnimationFrame(() => {
+      if (evidenceListRef.current) evidenceListRef.current.scrollTop = 0;
+      const panel = evidencePanelRef.current;
+      if (panel && getComputedStyle(panel).position !== "sticky") {
+        panel.focus({ preventScroll: true });
+        panel.scrollIntoView({ block: "start" });
+      }
+    });
+  }
 
   async function submitQuestion(value: string) {
     const trimmed = value.trim();
@@ -112,9 +131,10 @@ function App() {
         answerLanguage: responseLanguage,
       };
       setMessages((current) => [...current, assistantMessage]);
-      if (payload.citations[0]) setActiveCitation(payload.citations[0]);
+      setEvidenceSelection(null);
     } catch (error) {
       if (controller.signal.aborted) return;
+      setEvidenceSelection(null);
       setMessages((current) => [
         ...current,
         {
@@ -144,15 +164,11 @@ function App() {
     reset();
     activeRequestRef.current = null;
     setMessages([]);
-    setActiveCitation(null);
+    setEvidenceSelection(null);
     setQuestion("");
     setLoading(false);
     requestAnimationFrame(() => inputRef.current?.focus());
   }
-
-  const displayedCitations = activeCitation
-    ? [activeCitation, ...recentCitations.filter((item) => item.id !== activeCitation.id)]
-    : recentCitations;
 
   return (
     <div className="app-shell">
@@ -212,7 +228,7 @@ function App() {
                   </div>
                   <div className="message-content">
                     {message.role === "assistant" ? (
-                      <AnswerText message={displayed} onSelect={setActiveCitation} />
+                      <AnswerText message={displayed} onSelect={(citation) => selectCitation(message.id, citation)} />
                     ) : (
                       message.content
                     )}
@@ -224,7 +240,9 @@ function App() {
                       pending={translatingThisMessage ? translating.language : undefined}
                       disabled={Boolean(translating) || loading}
                       error={variant?.error}
-                      onSelect={(target) => void translate(message, target, setActiveCitation)}
+                      onSelect={(target) => void translate(message, target, (citation) => {
+                        setEvidenceSelection({ messageId: message.id, citationId: citation?.id ?? null });
+                      })}
                     />
                   )}
                 </article>
@@ -274,45 +292,47 @@ function App() {
         </section>
 
         <aside className="evidence" aria-label="Source evidence">
-          <div className="evidence-heading">
-            <div>
-              <p>Source desk</p>
-              <h2>Evidence used</h2>
-            </div>
-            <span>{displayedCitations.length || "—"}</span>
-          </div>
-
-          {displayedCitations.length ? (
-            <div className="evidence-list">
-              {displayedCitations.map((citation) => (
-                <a
-                  key={`${citation.id}-${citation.page}`}
-                  className={`evidence-item ${activeCitation?.id === citation.id ? "active" : ""}`}
-                  href={`/api/brochure#page=${citation.page}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span className="page-tab">p. {citation.page}</span>
-                  <strong>{citation.section}</strong>
-                  <span>{citation.excerpt}</span>
-                  <small>{citation.source}</small>
-                  <small className="brochure-link-label">Open brochure at page {citation.page} (new tab)</small>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div className="evidence-empty">
-              <div className="document-glyph" aria-hidden="true">
-                <span /><span /><span /><span />
+          <div className="evidence-panel" id="source-evidence" ref={evidencePanelRef} tabIndex={-1}>
+            <div className="evidence-heading">
+              <div>
+                <p>Source desk</p>
+                <h2>Evidence used</h2>
               </div>
-              <h3>Your sources will appear here</h3>
-              <p>Ask a question to see the exact brochure pages used to support the response.</p>
+              <span>{displayedCitations.length || "—"}</span>
             </div>
-          )}
 
-          <div className="evidence-footer">
-            <strong>About the source</strong>
-            <p>The brochure contains general information and may not include every policy term or exclusion.</p>
+            {displayedCitations.length ? (
+              <div className="evidence-list" ref={evidenceListRef} key={`${evidenceMessage?.id}-${evidenceVariant?.language ?? ""}`}>
+                {displayedCitations.map((citation) => (
+                  <a
+                    key={`${citation.id}-${citation.page}`}
+                    className={`evidence-item ${activeCitation?.id === citation.id ? "active" : ""}`}
+                    href={`/api/brochure#page=${citation.page}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="page-tab">p. {citation.page}</span>
+                    <strong>{citation.section}</strong>
+                    <span>{citation.excerpt}</span>
+                    <small>{citation.source}</small>
+                    <small className="brochure-link-label">Open brochure at page {citation.page} (new tab)</small>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="evidence-empty">
+                <div className="document-glyph" aria-hidden="true">
+                  <span /><span /><span /><span />
+                </div>
+                <h3>{evidenceMessage ? "No brochure sources" : "Your sources will appear here"}</h3>
+                <p>{evidenceMessage ? "This response did not cite the brochure." : "Ask a question to see the exact brochure pages used to support the response."}</p>
+              </div>
+            )}
+
+            <div className="evidence-footer">
+              <strong>About the source</strong>
+              <p>The brochure contains general information and may not include every policy term or exclusion.</p>
+            </div>
           </div>
         </aside>
       </main>
