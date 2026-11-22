@@ -3,6 +3,7 @@
   "chunks": [
     {
       "id": "prime-saver-p1-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 1,
       "section": "｜ 人壽 Life ｜ / 萬用壽險（非投資相連）產品",
@@ -10,6 +11,7 @@
     },
     {
       "id": "prime-saver-p2-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 2,
       "section": "您可創造更豐厚的財富，盡享更精彩人生，只要您及早作出 / 妥善的理財規劃。一份兼具靈活彈性和回報增長的萬用壽險",
@@ -17,6 +19,7 @@
     },
     {
       "id": "prime-saver-p3-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 3,
       "section": "43 / 萬用壽險在成熟市場已超越 %",
@@ -24,6 +27,7 @@
     },
     {
       "id": "prime-saver-p4-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 4,
       "section": "萬用壽險 — 真正為客戶度身訂造的保險計劃 / 萬用壽險 傳統壽險",
@@ -31,6 +35,7 @@
     },
     {
       "id": "prime-saver-p5-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 5,
       "section": "首選靈活萬用壽險計劃 / FLEXI-ULife Prime Saver",
@@ -38,6 +43,7 @@
     },
     {
       "id": "prime-saver-p6-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 6,
       "section": "靈活保障 / 1",
@@ -45,6 +51,7 @@
     },
     {
       "id": "prime-saver-p7-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 7,
       "section": "壽險保障選擇 / 2",
@@ -52,6 +59,7 @@
     },
     {
       "id": "prime-saver-p7-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 7,
       "section": "壽險保障選擇 / 2",
@@ -59,6 +67,7 @@
     },
     {
       "id": "prime-saver-p8-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 8,
       "section": "財富增值優勢 / 3",
@@ -66,6 +75,7 @@
     },
     {
       "id": "prime-saver-p8-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 8,
       "section": "財富增值優勢 / 3",
@@ -73,6 +83,7 @@
     },
     {
       "id": "prime-saver-p9-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 9,
       "section": "Extra Bonus will be credited to the Policy at the end of the 15th policy / 額外回報於第15個保單週年日及其後每5年",
@@ -80,6 +91,7 @@
     },
     {
       "id": "prime-saver-p10-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 10,
       "section": "提存彈性 / 4",
@@ -87,6 +99,7 @@
     },
     {
       "id": "prime-saver-p10-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 10,
       "section": "提存彈性 / 4",
@@ -94,6 +107,7 @@
     },
     {
       "id": "prime-saver-p11-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 11,
       "section": "額外安心保障 / 5",
@@ -101,6 +115,7 @@
     },
     {
       "id": "prime-saver-p11-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 11,
       "section": "額外安心保障 / 5",
@@ -108,6 +123,7 @@
     },
     {
       "id": "prime-saver-p12-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 12,
       "section": "Notes / 附註",
@@ -115,6 +131,7 @@
     },
     {
       "id": "prime-saver-p12-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 12,
       "section": "Notes / 附註",
@@ -122,6 +139,7 @@
     },
     {
       "id": "prime-saver-p12-c3",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 12,
       "section": "Notes / 附註",
@@ -129,6 +147,7 @@
     },
     {
       "id": "prime-saver-p12-c4",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 12,
       "section": "Notes / 附註",
@@ -136,6 +155,7 @@
     },
     {
       "id": "prime-saver-p13-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 13,
       "section": "Important Information / 重要資料",
@@ -143,6 +163,7 @@
     },
     {
       "id": "prime-saver-p13-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 13,
       "section": "Important Information / 重要資料",
@@ -150,6 +171,7 @@
     },
     {
       "id": "prime-saver-p13-c3",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 13,
       "section": "Important Information / 重要資料",
@@ -157,6 +179,7 @@
     },
     {
       "id": "prime-saver-p13-c4",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 13,
       "section": "Important Information / 重要資料",
@@ -164,6 +187,7 @@
     },
     {
       "id": "prime-saver-p13-c5",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 13,
       "section": "Important Information / 重要資料",
@@ -171,6 +195,7 @@
     },
     {
       "id": "prime-saver-p13-c6",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 13,
       "section": "Important Information / 重要資料",
@@ -178,6 +203,7 @@
     },
     {
       "id": "prime-saver-p14-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 14,
       "section": "Key Product Disclosures / 主要產品說明",
@@ -185,6 +211,7 @@
     },
     {
       "id": "prime-saver-p14-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 14,
       "section": "Key Product Disclosures / 主要產品說明",
@@ -192,6 +219,7 @@
     },
     {
       "id": "prime-saver-p14-c3",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 14,
       "section": "Key Product Disclosures / 主要產品說明",
@@ -199,6 +227,7 @@
     },
     {
       "id": "prime-saver-p14-c4",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 14,
       "section": "Key Product Disclosures / 主要產品說明",
@@ -206,6 +235,7 @@
     },
     {
       "id": "prime-saver-p14-c5",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 14,
       "section": "Key Product Disclosures / 主要產品說明",
@@ -213,6 +243,7 @@
     },
     {
       "id": "prime-saver-p15-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 15,
       "section": "Duty of Disclosure and the Consequences of Not Making Full Disclosure / 提供資料責任及未符合這要求的後果 You are required to disclose in",
@@ -220,6 +251,7 @@
     },
     {
       "id": "prime-saver-p15-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 15,
       "section": "Duty of Disclosure and the Consequences of Not Making Full Disclosure / 提供資料責任及未符合這要求的後果 You are required to disclose in",
@@ -227,6 +259,7 @@
     },
     {
       "id": "prime-saver-p15-c3",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 15,
       "section": "Duty of Disclosure and the Consequences of Not Making Full Disclosure / 提供資料責任及未符合這要求的後果 You are required to disclose in",
@@ -234,6 +267,7 @@
     },
     {
       "id": "prime-saver-p15-c4",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 15,
       "section": "Duty of Disclosure and the Consequences of Not Making Full Disclosure / 提供資料責任及未符合這要求的後果 You are required to disclose in",
@@ -241,6 +275,7 @@
     },
     {
       "id": "prime-saver-p16-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 16,
       "section": "「首選靈活萬用壽險計劃」一覽表 / FLEXI-ULife Prime Saver – at a glance",
@@ -248,6 +283,7 @@
     },
     {
       "id": "prime-saver-p16-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 16,
       "section": "「首選靈活萬用壽險計劃」一覽表 / FLEXI-ULife Prime Saver – at a glance",
@@ -255,6 +291,7 @@
     },
     {
       "id": "prime-saver-p16-c3",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 16,
       "section": "「首選靈活萬用壽險計劃」一覽表 / FLEXI-ULife Prime Saver – at a glance",
@@ -262,6 +299,7 @@
     },
     {
       "id": "prime-saver-p17-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 17,
       "section": "< Age 45 ≥ Age 45 / 最低保障額 歲 歲",
@@ -269,6 +307,7 @@
     },
     {
       "id": "prime-saver-p17-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 17,
       "section": "< Age 45 ≥ Age 45 / 最低保障額 歲 歲",
@@ -276,6 +315,7 @@
     },
     {
       "id": "prime-saver-p17-c3",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 17,
       "section": "< Age 45 ≥ Age 45 / 最低保障額 歲 歲",
@@ -283,6 +323,7 @@
     },
     {
       "id": "prime-saver-p18-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 18,
       "section": "Policy Information / 保單資料",
@@ -290,6 +331,7 @@
     },
     {
       "id": "prime-saver-p19-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 19,
       "section": "以上為計劃的一般資料，只供參考之用，並非保單的一部份，亦未涵蓋保單的所有條款。有關保障範圍、詳情及條款， / 以及不保事項，請參閱保單文件。如有垂詢或欲索取保單文件之範本，歡迎與本公司之顧問、特許分銷商或保險經紀聯",
@@ -297,6 +339,7 @@
     },
     {
       "id": "prime-saver-p20-c1",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 20,
       "section": "客戶服務： / 香港尖沙咀廣東道9號港威大廈6座12樓1211室",
@@ -304,6 +347,7 @@
     },
     {
       "id": "prime-saver-p20-c2",
+      "visibility": "public",
       "source": "FLEXI-ULife Prime Saver",
       "page": 20,
       "section": "客戶服務： / 香港尖沙咀廣東道9號港威大廈6座12樓1211室",

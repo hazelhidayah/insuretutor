@@ -9,6 +9,7 @@ APP = Path(__file__).resolve().parents[1] / "app"
 FORBIDDEN_IMPORTS = {
     "app.providers": ("app.main", "app.chat", "app.evaluation", "app.retrieval"),
     "app.retrieval": ("app.main", "app.chat", "app.evaluation", "app.providers"),
+    "app.verified_answers": ("app.main", "app.chat", "app.evaluation", "app.providers"),
 }
 
 
@@ -35,7 +36,9 @@ def violations(source: str, package: str, forbidden: tuple[str, ...]):
 @pytest.mark.parametrize("layer", FORBIDDEN_IMPORTS)
 def test_infrastructure_imports_stay_below_orchestration(layer: str) -> None:
     failures = []
-    for path in (APP / layer.rsplit(".", 1)[1]).rglob("*.py"):
+    target = APP / layer.rsplit(".", 1)[1]
+    paths = [target.with_suffix(".py")] if target.with_suffix(".py").is_file() else target.rglob("*.py")
+    for path in paths:
         package = ".".join(("app", *path.relative_to(APP).parent.parts))
         for line, module in violations(path.read_text(encoding="utf-8"), package, FORBIDDEN_IMPORTS[layer]):
             failures.append(f"{path.relative_to(APP)}:{line} imports {module}")

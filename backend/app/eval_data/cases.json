@@ -7,7 +7,7 @@
       16
     ],
     "expected": "grounded",
-    "offline_answer": "The current assumed base crediting rate is 4%, and it is not guaranteed. [S1]"
+    "offline_answer": "The current assumed base crediting rate is 4%, and it is not guaranteed. [S2]"
   },
   {
     "id": "withdrawal-en",
@@ -27,7 +27,30 @@
       12
     ],
     "expected": "grounded",
-    "offline_answer": "定期提款须符合保单条件。[S1]"
+    "reviewed_answer": true,
+    "required_answer_patterns": ["10年", "每月[^。]*最短一年", "每年[^。]*最短三年"]
+  },
+  {
+    "id": "cooling-off-zh-cn",
+    "question": "保单的冷静期是多少天？",
+    "language": "zh-CN",
+    "pages": [15],
+    "expected": "grounded",
+    "reviewed_answer": true,
+    "required_answer_patterns": ["21\\s*个?\\s*[历曆]日", "交付保[单單]|保[单單]交付", "通知[书書]", "[较較]早"]
+  },
+  {
+    "id": "cooling-off-follow-up-zh-cn",
+    "question": "那从哪一天开始算？",
+    "language": "zh-CN",
+    "history": [
+      {"role": "user", "content": "保单的冷静期是多少天？"},
+      {"role": "assistant", "content": "冷静期为21个历日。"}
+    ],
+    "pages": [15],
+    "expected": "grounded",
+    "reviewed_answer": true,
+    "required_answer_patterns": ["交付保[单單]|保[单單]交付", "通知[书書]", "[较較]早"]
   },
   {
     "id": "rate-zh-tw",
@@ -84,6 +107,30 @@
     "expected": "invalid_citation",
     "offline_answer": "This has no citation.",
     "offline_only": true
+  },
+  {
+    "id": "personalised-purchase-en",
+    "question": "I am 30 with two children. Should I buy this plan?",
+    "language": "en",
+    "expected": "insufficient"
+  },
+  {
+    "id": "personalised-purchase-zh-cn",
+    "question": "我今年30岁，有两个孩子，我应该买这份保单吗？",
+    "language": "zh-CN",
+    "expected": "insufficient"
+  },
+  {
+    "id": "out-of-scope-directions-en",
+    "question": "Can you give me directions to McDonalds?",
+    "language": "en",
+    "expected": "insufficient"
+  },
+  {
+    "id": "out-of-scope-directions-zh-cn",
+    "question": "请问怎么去麦当劳？",
+    "language": "zh-CN",
+    "expected": "insufficient"
   },
   {
     "id": "out-of-scope-rating",
