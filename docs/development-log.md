@@ -1,5 +1,61 @@
 # Development Log
 
+## 2026-11-22 - Round out tests and explain the design choices
+
+**Why:** The existing tests covered the core pipeline. The HTTP boundary, mixed-quality retrieval and reviewer outages needed direct coverage, and the README needed to explain why the design fits the demo.
+
+**Where:** Backend API and guardrail tests, evaluation cases, README, evaluation guide and architecture decision.
+
+**How:** Exercise request validation, reviewed follow-up citations, exclusion of unsafe neighbouring passages, percentage evidence, reviewer failure, and bilingual refusals. Serve the UI at the explicit homepage route and compiled assets through the existing static mount so arbitrary URL paths no longer enter file lookup. Document provider, retrieval, Docker and safety trade-offs in practical language.
+
+**Impact:** Reviewers have clearer setup and decision notes, and tests cover failure paths alongside the happy path.
+
+**Verification:** 59 backend tests and 21 offline cases passed. The Docker smoke test checked the homepage, JavaScript asset, original PDF, unknown-route 404 and reviewed Chinese response. The full live model suite was not rerun.
+
+**AI assistance:** The primary Codex agent implemented the changes and verified them.
+
+## 2026-11-22 - Verify the take-home walkthrough and preserve brochure conditions
+
+**Why:** Live answers previously misstated the cooling-off trigger and omitted separate monthly and annual withdrawal terms.
+
+**Where:** Reviewed-answer module, public passage lookup, chat orchestration, citation checks, evaluation fixtures, and README.
+
+**How:** Read the original PDF pages side by side with live answers. Keep two reviewed clauses in one module with a narrow question match and check the page and source hashes before answering. Keep ordinary questions on the RAG path. Extend the architecture test to prevent the reviewed-answer module from depending on the API, model provider, or chat service. Treat citation lookalikes such as `[SI]` as invalid.
+
+**Impact:** The tested deadline and withdrawal questions preserve their material conditions in both reply languages. A stale source fails closed. Model-generated replies still require claim-level review.
+
+**Verification:** 50 backend tests and all 17 offline evaluation cases passed. The Docker browser walkthrough exercised English generation, Chinese withdrawals, language switching, a Chinese cooling-off follow-up, PDF links, and out-of-scope and personal-advice refusals.
+
+**AI assistance:** The primary Codex agent checked the source pages, implemented the changes, and ran the walkthrough.
+
+## Add layered guardrails for public brochure chat
+
+**Why:** Live review showed that valid source labels alone could accompany unsupported claims.
+
+**Where:** Guardrail package, chat service, corpus ingestion and index, API validation, provider settings, and tests.
+
+**How:** Mask recognised sensitive inputs, enforce public document metadata before indexing, scan and threshold each selected passage, and reject unsafe output or percentages absent from cited evidence. Add an opt-in model review with a strict pass verdict and log decision categories.
+
+**Impact:** Restricted passages and several risky outputs are withheld. Authenticated tenant access and reliable semantic verification remain separate concerns.
+
+**Verification:** 46 backend tests and all 17 offline evaluation cases passed. The second model call was tested with scripted verdicts.
+
+**AI assistance:** The primary Codex agent audited, implemented, and verified the changes.
+
+## Check Chinese deadline and withdrawal answers
+
+**Why:** Live answers misread the cooling-off start date and omitted or conflated withdrawal terms.
+
+**Where:** Chat retrieval and prompt, evaluation runner, and multilingual fixtures.
+
+**How:** Retry short referential Chinese follow-ups against the previous user topic when standalone retrieval fails. Tell the model to separate deadlines from trigger events and list conditions per option. Add answer-pattern checks for the cooling-off duration and triggers and for both withdrawal terms.
+
+**Impact:** The tested follow-up now finds brochure evidence. Pattern checks detect missing terms but cannot establish that an answer is factually correct.
+
+**Verification:** 36 backend tests and 17 offline cases passed. In live hybrid testing, the local model still misstated the cooling-off start and omitted withdrawal terms. These remain open quality issues.
+
+**AI assistance:** The primary Codex agent implemented and evaluated the changes.
+
 This is the human-readable record of every material project change. Commit history remains the exact file-level record.
 
 ## Logging rule
